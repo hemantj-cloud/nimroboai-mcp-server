@@ -131,4 +131,23 @@ describe('NitroStack MCP Tools & Capabilities', () => {
       expect(catalog.contents[0].mimeType).toBe('application/json');
     });
   });
+
+  describe('McpApplicationFactory Tool Registration', () => {
+    it('should discover and register tools when bootstrapping AppModule', async () => {
+      const { McpApplicationFactory } = await import('@nitrostack/core');
+      const { AppModule } = await import('../src/app.module.js');
+
+      const server: any = await McpApplicationFactory.create(AppModule);
+      expect(server).toBeDefined();
+      const tools = server.tools instanceof Map ? Array.from(server.tools.values()) : Array.isArray(server.tools) ? server.tools : Object.values(server.tools);
+      const registeredToolNames = tools.map((t: any) => t.name || t.definition?.name);
+      expect(registeredToolNames).toContain('get_user_profile');
+      expect(registeredToolNames).toContain('get_outcomes');
+      expect(registeredToolNames).toContain('get_outcome_analytics');
+      expect(registeredToolNames).toContain('get_outcome_runs');
+      expect(registeredToolNames).toContain('get_run_status');
+      expect(registeredToolNames).toContain('dispatch_outcome_run');
+      expect(tools.length).toBe(6);
+    });
+  });
 });

@@ -9,13 +9,15 @@ import { NimroboResources } from './nimrobo.resources.js';
 @Module({
   name: 'nimrobo',
   description: 'Nimrobo AI module for Outcome Analytics and Local Run Dispatcher',
-  providers: [
-    OAuthService,
-    NimroboClientService,
+  controllers: [
     OutcomeAnalyticsTools,
     OutcomeDispatcherTools,
     NimroboPrompts,
     NimroboResources,
+  ],
+  providers: [
+    OAuthService,
+    NimroboClientService,
   ],
   exports: [
     OAuthService,
