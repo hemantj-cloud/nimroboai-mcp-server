@@ -1,5 +1,6 @@
 import {
   ToolDecorator as Tool,
+  Widget,
   ExecutionContext,
   z,
   UseGuards,
@@ -58,6 +59,7 @@ export class OutcomeDispatcherTools {
       },
     },
   })
+  @Widget('dispatch-result')
   @UseGuards(OAuthGuard)
   async dispatchOutcomeRun(
     input: {

@@ -1,5 +1,6 @@
 import {
   ToolDecorator as Tool,
+  Widget,
   ExecutionContext,
   z,
   UseGuards,
@@ -30,6 +31,7 @@ export class OutcomeAnalyticsTools {
       },
     },
   })
+  @Widget('user-profile')
   @UseGuards(OAuthGuard)
   async getUserProfile(_input: {}, _ctx: ExecutionContext) {
     const profile = await this.nimroboClient.getUserProfile();
@@ -78,6 +80,7 @@ export class OutcomeAnalyticsTools {
       },
     },
   })
+  @Widget('outcomes-catalog')
   @UseGuards(OAuthGuard)
   async getOutcomes(
     input: { status?: 'active' | 'paused' | 'archived' | 'draft'; tag?: string; limit?: number },
@@ -128,6 +131,7 @@ export class OutcomeAnalyticsTools {
       },
     },
   })
+  @Widget('outcome-analytics')
   @UseGuards(OAuthGuard)
   async getOutcomeAnalytics(
     input: { outcome_id: string; time_range?: '7d' | '30d' | '90d' | 'all'; metrics?: string[] },
@@ -183,6 +187,7 @@ export class OutcomeAnalyticsTools {
       },
     },
   })
+  @Widget('outcome-runs')
   @UseGuards(OAuthGuard)
   async getOutcomeRuns(
     input: {
@@ -226,6 +231,7 @@ export class OutcomeAnalyticsTools {
       },
     },
   })
+  @Widget('run-status')
   @UseGuards(OAuthGuard)
   async getRunStatus(
     input: { run_id: string; include_logs?: boolean },

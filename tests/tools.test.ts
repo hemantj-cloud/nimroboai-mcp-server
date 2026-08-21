@@ -132,7 +132,7 @@ describe('NitroStack MCP Tools & Capabilities', () => {
     });
   });
 
-  describe('McpApplicationFactory Tool Registration', () => {
+  describe('McpApplicationFactory Tool Registration & Widget Binding', () => {
     it('should discover and register tools when bootstrapping AppModule', async () => {
       const { McpApplicationFactory } = await import('@nitrostack/core');
       const { AppModule } = await import('../src/app.module.js');
@@ -149,5 +149,37 @@ describe('NitroStack MCP Tools & Capabilities', () => {
       expect(registeredToolNames).toContain('dispatch_outcome_run');
       expect(tools.length).toBe(6);
     });
+
+    it('should have @Widget metadata attached to all 6 tools', async () => {
+      const { getWidgetMetadata } = await import('@nitrostack/core');
+      const { OutcomeAnalyticsTools } = await import('../src/modules/nimrobo/outcome-analytics.tools.js');
+      const { OutcomeDispatcherTools } = await import('../src/modules/nimrobo/outcome-dispatcher.tools.js');
+
+      expect(getWidgetMetadata(OutcomeAnalyticsTools.prototype, 'getUserProfile')?.route).toBe('user-profile');
+      expect(getWidgetMetadata(OutcomeAnalyticsTools.prototype, 'getOutcomes')?.route).toBe('outcomes-catalog');
+      expect(getWidgetMetadata(OutcomeAnalyticsTools.prototype, 'getOutcomeAnalytics')?.route).toBe('outcome-analytics');
+      expect(getWidgetMetadata(OutcomeAnalyticsTools.prototype, 'getOutcomeRuns')?.route).toBe('outcome-runs');
+      expect(getWidgetMetadata(OutcomeAnalyticsTools.prototype, 'getRunStatus')?.route).toBe('run-status');
+      expect(getWidgetMetadata(OutcomeDispatcherTools.prototype, 'dispatchOutcomeRun')?.route).toBe('dispatch-result');
+    });
+
+    it('should have all 6 widgets defined in widget-manifest.json', async () => {
+      const fs = await import('fs');
+      const path = await import('path');
+      const manifestPath = path.resolve(__dirname, '../src/widgets/widget-manifest.json');
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+
+      expect(manifest.widgets).toBeDefined();
+      expect(manifest.widgets.length).toBe(6);
+
+      const uris = manifest.widgets.map((w: any) => w.uri);
+      expect(uris).toContain('/user-profile');
+      expect(uris).toContain('/outcomes-catalog');
+      expect(uris).toContain('/outcome-analytics');
+      expect(uris).toContain('/outcome-runs');
+      expect(uris).toContain('/run-status');
+      expect(uris).toContain('/dispatch-result');
+    });
   });
 });
+
