@@ -1,0 +1,257 @@
+{
+  "version": "1.0.0",
+  "widgets": [
+    {
+      "uri": "/user-profile",
+      "name": "User Profile & Organization",
+      "description": "Displays authenticated user identity, organization details, role, enterprise plan, and OAuth security status",
+      "examples": [
+        {
+          "name": "Enterprise Pilot User",
+          "description": "Shows user profile and plan details",
+          "data": {
+            "success": true,
+            "data": {
+              "id": "usr_nimrobo_pilot_01",
+              "email": "pilot.user@nimroboai.com",
+              "name": "Nimrobo AI Engineer",
+              "organization": "NitroStack Enterprise Pilot",
+              "role": "admin",
+              "plan": "enterprise",
+              "created_at": "2026-01-15T08:00:00Z"
+            }
+          }
+        }
+      ],
+      "tags": [
+        "user",
+        "profile",
+        "account",
+        "oauth",
+        "nimrobo"
+      ]
+    },
+    {
+      "uri": "/outcomes-catalog",
+      "name": "Outcomes Catalog",
+      "description": "Interactive catalog of active and historical optimization outcomes with baseline vs current metrics and lift previews",
+      "examples": [
+        {
+          "name": "Active Funnel Outcomes",
+          "description": "Lists active optimization outcomes",
+          "data": {
+            "success": true,
+            "count": 2,
+            "outcomes": [
+              {
+                "id": "out_checkout_conversion",
+                "name": "Checkout Funnel Conversion Rate",
+                "description": "Optimize user completion rate through multi-step checkout workflow by automating layout experiments.",
+                "status": "active",
+                "target_metric": "checkout_conversion_rate",
+                "baseline_value": 3.42,
+                "current_value": 4.88,
+                "unit": "%",
+                "tags": ["ecommerce", "conversion", "core-funnel"],
+                "updated_at": "2026-08-20T14:30:00Z"
+              },
+              {
+                "id": "out_onboarding_activation",
+                "name": "User Onboarding Day 1 Activation",
+                "description": "Increase percentage of new signups that complete the setup wizard on their first session.",
+                "status": "active",
+                "target_metric": "day1_activation_rate",
+                "baseline_value": 28.5,
+                "current_value": 37.2,
+                "unit": "%",
+                "tags": ["growth", "onboarding", "activation"],
+                "updated_at": "2026-08-19T09:15:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "tags": [
+        "outcomes",
+        "catalog",
+        "kpi",
+        "optimization",
+        "funnel"
+      ]
+    },
+    {
+      "uri": "/outcome-analytics",
+      "name": "Outcome Analytics Dashboard",
+      "description": "Detailed performance metrics, relative lift %, statistical significance gauge, and interactive trend chart",
+      "examples": [
+        {
+          "name": "30-Day Conversion Lift",
+          "description": "Shows 30-day analytics timeline and statistical confidence",
+          "data": {
+            "success": true,
+            "analytics": {
+              "outcome_id": "out_checkout_conversion",
+              "outcome_name": "Checkout Funnel Conversion Rate",
+              "time_range": "30d",
+              "summary": {
+                "baseline": 3.42,
+                "current": 4.88,
+                "absolute_change": 1.46,
+                "relative_lift_percent": 42.69,
+                "is_statistically_significant": true,
+                "confidence_level": 98.4,
+                "total_runs": 14,
+                "successful_runs": 12
+              },
+              "timeline": [
+                { "date": "2026-07-22", "value": 3.42, "sample_size": 1420, "confidence_lower": 3.15, "confidence_upper": 3.69 },
+                { "date": "2026-07-29", "value": 3.81, "sample_size": 1560, "confidence_lower": 3.52, "confidence_upper": 4.10 },
+                { "date": "2026-08-05", "value": 4.15, "sample_size": 1490, "confidence_lower": 3.86, "confidence_upper": 4.44 },
+                { "date": "2026-08-12", "value": 4.52, "sample_size": 1610, "confidence_lower": 4.21, "confidence_upper": 4.83 },
+                { "date": "2026-08-19", "value": 4.88, "sample_size": 1750, "confidence_lower": 4.55, "confidence_upper": 5.21 }
+              ]
+            }
+          }
+        }
+      ],
+      "tags": [
+        "analytics",
+        "charts",
+        "lift",
+        "statistics",
+        "timeline"
+      ]
+    },
+    {
+      "uri": "/outcome-runs",
+      "name": "Outcome Runs History",
+      "description": "Historical runs feed showing variant hypotheses tested, execution duration, and measured before/after metrics",
+      "examples": [
+        {
+          "name": "Checkout Optimization Runs",
+          "description": "Shows completed and running experiment runs",
+          "data": {
+            "success": true,
+            "count": 2,
+            "runs": [
+              {
+                "id": "run_20260820_01",
+                "outcome_id": "out_checkout_conversion",
+                "status": "completed",
+                "target_environment": "local_mac",
+                "hypothesis": "Auto-expanding 1-click payment decreases friction",
+                "metric_before": 4.52,
+                "metric_after": 4.88,
+                "duration_seconds": 22500,
+                "started_at": "2026-08-20T08:00:00Z",
+                "completed_at": "2026-08-20T14:15:00Z"
+              },
+              {
+                "id": "run_20260818_02",
+                "outcome_id": "out_checkout_conversion",
+                "status": "completed",
+                "target_environment": "local_mac",
+                "hypothesis": "Pre-filling address from geolocation reduces address step drop-off",
+                "metric_before": 4.15,
+                "metric_after": 4.52,
+                "duration_seconds": 21600,
+                "started_at": "2026-08-18T10:00:00Z",
+                "completed_at": "2026-08-18T16:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "tags": [
+        "runs",
+        "experiments",
+        "variants",
+        "history",
+        "results"
+      ]
+    },
+    {
+      "uri": "/run-status",
+      "name": "Run Status & Diagnostic Stepper",
+      "description": "Real-time execution status tracker, step progression stepper, and live diagnostic console log viewer",
+      "examples": [
+        {
+          "name": "Active Run Stepper & Logs",
+          "description": "Shows step progression and diagnostic log stream",
+          "data": {
+            "success": true,
+            "run": {
+              "id": "run_20260820_01",
+              "outcome_id": "out_checkout_conversion",
+              "status": "completed",
+              "target_environment": "local_mac",
+              "hypothesis": "Auto-expanding 1-click payment decreases friction",
+              "duration_seconds": 22500,
+              "steps": [
+                {
+                  "step_number": 1,
+                  "name": "Local Mac Bridge Setup",
+                  "status": "completed",
+                  "logs": ["Connected to local Mac daemon", "Valid environment dependencies"]
+                },
+                {
+                  "step_number": 2,
+                  "name": "Agent Action Execution",
+                  "status": "completed",
+                  "logs": ["Applied layout variant B patch", "Tests passing 42/42"]
+                },
+                {
+                  "step_number": 3,
+                  "name": "Measurement & Metrics Aggregation",
+                  "status": "completed",
+                  "logs": ["Recorded 1,750 observations", "Lift: +7.96% relative"]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "tags": [
+        "status",
+        "stepper",
+        "logs",
+        "terminal",
+        "realtime"
+      ]
+    },
+    {
+      "uri": "/dispatch-result",
+      "name": "Run Dispatch Confirmation",
+      "description": "Confirmation card and parameter inspector for newly dispatched outcome experiment runs",
+      "examples": [
+        {
+          "name": "Dispatched Local Run",
+          "description": "Shows dispatched run confirmation and target environment",
+          "data": {
+            "success": true,
+            "message": "Outcome run dispatched successfully to local_mac",
+            "run": {
+              "id": "run_20260821_123456",
+              "outcome_id": "out_checkout_conversion",
+              "status": "running",
+              "target_environment": "local_mac",
+              "hypothesis": "Optimize button hierarchy to improve checkout completion",
+              "parameters": {
+                "variant": "prominent_cta",
+                "animation": true
+              }
+            }
+          }
+        }
+      ],
+      "tags": [
+        "dispatch",
+        "launch",
+        "local_mac",
+        "bridge",
+        "execution"
+      ]
+    }
+  ],
+  "generatedAt": "2026-08-21T00:00:00.000Z"
+}
