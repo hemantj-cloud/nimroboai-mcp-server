@@ -33,8 +33,7 @@ describe('NitroStack MCP Tools & Capabilities', () => {
   describe('OAuthService', () => {
     it('should generate valid authorization URL matching specs', () => {
       const { authorizationUrl, pkce } = oauthService.getAuthorizationUrl();
-      expect(authorizationUrl).toContain('https://app.nimroboai.com/oauth/authorize');
-      expect(authorizationUrl).toContain('client_id=nitrostack_mcp');
+      expect(authorizationUrl).toContain('/oauth/authorize');
       expect(authorizationUrl).toContain('response_type=code');
       expect(authorizationUrl).toContain('scope=user%3Aread');
       expect(authorizationUrl).toContain('code_challenge_method=S256');

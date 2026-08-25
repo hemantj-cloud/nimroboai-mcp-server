@@ -6,48 +6,85 @@ import { z } from 'zod';
  * Enforces fail-fast startup if any required environment variable is missing or malformed.
  */
 const EnvSchema = z.object({
-  NIMROBO_API_BASE_URL: z
-    .string({ required_error: 'NIMROBO_API_BASE_URL is required' })
-    .url('NIMROBO_API_BASE_URL must be a valid URL (e.g. https://app.nimroboai.com)'),
-  NIMROBO_CLIENT_ID: z
-    .string({ required_error: 'NIMROBO_CLIENT_ID is required' })
-    .min(1, 'NIMROBO_CLIENT_ID cannot be empty (e.g. nitrostack_mcp)'),
-  NIMROBO_AUTH_URL: z
-    .string({ required_error: 'NIMROBO_AUTH_URL is required' })
-    .url('NIMROBO_AUTH_URL must be a valid URL (e.g. https://app.nimroboai.com/oauth/authorize)'),
-  NIMROBO_TOKEN_URL: z
-    .string({ required_error: 'NIMROBO_TOKEN_URL is required' })
-    .url('NIMROBO_TOKEN_URL must be a valid URL (e.g. https://app.nimroboai.com/api/oauth/token)'),
-  NIMROBO_REDIRECT_URI: z
-    .string({ required_error: 'NIMROBO_REDIRECT_URI is required' })
-    .url('NIMROBO_REDIRECT_URI must be a valid URL (e.g. https://mcp.nitrostack.dev/oauth/callback)'),
-  NIMROBO_SCOPE: z
-    .string({ required_error: 'NIMROBO_SCOPE is required' })
-    .min(1, 'NIMROBO_SCOPE cannot be empty (e.g. user:read)'),
-  NIMROBO_ACCESS_TOKEN: z.string().optional(),
-  NIMROBO_MOCK_MODE: z
-    .enum(['true', 'false'])
-    .optional()
-    .transform((val) => val === 'true'),
+  // =============================================================================
+  // Server & OAuth 2.1 Configuration
+  // =============================================================================
+  RESOURCE_URI: z
+    .string({ required_error: 'RESOURCE_URI is required' })
+    .url('RESOURCE_URI must be a valid URL (e.g. https://awli-smartdocs-6a46596f-awlis-org-f974e39c.dev.nitrocloud.ai/mcp)'),
+  AUTH_SERVER_URL: z
+    .string({ required_error: 'AUTH_SERVER_URL is required' })
+    .url('AUTH_SERVER_URL must be a valid URL (e.g. https://dev-a5xfe584t2l5t0nr.us.auth0.com)'),
   OAUTH_REQUIRED: z
     .enum(['true', 'false'])
     .optional()
     .transform((val) => val === 'true'),
-  RESOURCE_URI: z
-    .string({ required_error: 'RESOURCE_URI is required' })
-    .url('RESOURCE_URI must be a valid URL (e.g. https://app.nimroboai.com)'),
-  AUTH_SERVER_URL: z
-    .string({ required_error: 'AUTH_SERVER_URL is required' })
-    .url('AUTH_SERVER_URL must be a valid URL (e.g. https://app.nimroboai.com)'),
-  TOKEN_ISSUER: z.string().optional(),
+  JWKS_URI: z
+    .string()
+    .url('JWKS_URI must be a valid URL')
+    .optional(),
   TOKEN_AUDIENCE: z.string().optional(),
+  TOKEN_ISSUER: z.string().optional(),
+
+  // Dynamic Client Registration & OAuth Credentials
+  OAUTH_ENABLE_CLIENT_REGISTRATION: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((val) => val === 'true'),
+  OAUTH_CLIENT_ID: z.string().optional(),
+  OAUTH_CLIENT_SECRET: z.string().optional(),
+
+  // Token Introspection (Optional)
   INTROSPECTION_ENDPOINT: z.string().optional(),
   INTROSPECTION_CLIENT_SECRET: z.string().optional(),
+
+  // =============================================================================
+  // Nimrobo API Integration Settings (with defaults for standalone OAuth execution)
+  // =============================================================================
+  NIMROBO_API_BASE_URL: z
+    .string()
+    .url('NIMROBO_API_BASE_URL must be a valid URL')
+    .optional()
+    .default('https://app.nimroboai.com'),
+  NIMROBO_CLIENT_ID: z.string().optional(),
+  NIMROBO_AUTH_URL: z
+    .string()
+    .url('NIMROBO_AUTH_URL must be a valid URL')
+    .optional(),
+  NIMROBO_TOKEN_URL: z
+    .string()
+    .url('NIMROBO_TOKEN_URL must be a valid URL')
+    .optional(),
+  NIMROBO_REDIRECT_URI: z
+    .string()
+    .url('NIMROBO_REDIRECT_URI must be a valid URL')
+    .optional()
+    .default('https://mcp.nitrostack.dev/oauth/callback'),
+  NIMROBO_SCOPE: z.string().optional().default('user:read'),
+  NIMROBO_ACCESS_TOKEN: z.string().optional(),
+  NIMROBO_MOCK_MODE: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((val) => val !== 'false'),
 });
 
 export type ValidatedEnv = z.infer<typeof EnvSchema>;
 
 export interface NimroboConfig {
+  // OAuth 2.1 & Server Settings
+  resourceUri: string;
+  authServerUrl: string;
+  oauthRequired: boolean;
+  jwksUri?: string;
+  tokenAudience: string;
+  tokenIssuer?: string;
+  oauthEnableClientRegistration: boolean;
+  oauthClientId?: string;
+  oauthClientSecret?: string;
+  introspectionEndpoint?: string;
+  introspectionClientSecret?: string;
+
+  // Nimrobo API Settings
   apiBaseUrl: string;
   clientId: string;
   authUrl: string;
@@ -58,13 +95,6 @@ export interface NimroboConfig {
   tokenLifetimeDays: number;
   accessToken?: string;
   isMockMode: boolean;
-  oauthRequired: boolean;
-  resourceUri: string;
-  authServerUrl: string;
-  tokenIssuer?: string;
-  tokenAudience?: string;
-  introspectionEndpoint?: string;
-  introspectionClientSecret?: string;
 }
 
 /**
@@ -85,25 +115,34 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): NimroboConfig 
   }
 
   const parsed = result.data;
+  const clientId = parsed.NIMROBO_CLIENT_ID || parsed.OAUTH_CLIENT_ID || 'nitrostack_mcp';
+  const authUrl = parsed.NIMROBO_AUTH_URL || `${parsed.AUTH_SERVER_URL}/oauth/authorize`;
+  const tokenUrl = parsed.NIMROBO_TOKEN_URL || `${parsed.AUTH_SERVER_URL}/oauth/token`;
+  const clientSecret = parsed.OAUTH_CLIENT_SECRET || parsed.INTROSPECTION_CLIENT_SECRET;
 
   return Object.freeze({
+    resourceUri: parsed.RESOURCE_URI,
+    authServerUrl: parsed.AUTH_SERVER_URL,
+    oauthRequired: parsed.OAUTH_REQUIRED ?? false,
+    jwksUri: parsed.JWKS_URI,
+    tokenAudience: parsed.TOKEN_AUDIENCE || parsed.RESOURCE_URI,
+    tokenIssuer: parsed.TOKEN_ISSUER || (parsed.AUTH_SERVER_URL ? `${parsed.AUTH_SERVER_URL}/` : undefined),
+    oauthEnableClientRegistration: parsed.OAUTH_ENABLE_CLIENT_REGISTRATION ?? false,
+    oauthClientId: parsed.OAUTH_CLIENT_ID,
+    oauthClientSecret: clientSecret,
+    introspectionEndpoint: parsed.INTROSPECTION_ENDPOINT,
+    introspectionClientSecret: clientSecret,
+
     apiBaseUrl: parsed.NIMROBO_API_BASE_URL,
-    clientId: parsed.NIMROBO_CLIENT_ID,
-    authUrl: parsed.NIMROBO_AUTH_URL,
-    tokenUrl: parsed.NIMROBO_TOKEN_URL,
+    clientId,
+    authUrl,
+    tokenUrl,
     redirectUri: parsed.NIMROBO_REDIRECT_URI,
     scope: parsed.NIMROBO_SCOPE,
     codeChallengeMethod: 'S256' as const,
     tokenLifetimeDays: 30,
     accessToken: parsed.NIMROBO_ACCESS_TOKEN || undefined,
-    isMockMode: parsed.NIMROBO_MOCK_MODE ?? false,
-    oauthRequired: parsed.OAUTH_REQUIRED ?? false,
-    resourceUri: parsed.RESOURCE_URI,
-    authServerUrl: parsed.AUTH_SERVER_URL,
-    tokenIssuer: parsed.TOKEN_ISSUER,
-    tokenAudience: parsed.TOKEN_AUDIENCE,
-    introspectionEndpoint: parsed.INTROSPECTION_ENDPOINT,
-    introspectionClientSecret: parsed.INTROSPECTION_CLIENT_SECRET,
+    isMockMode: parsed.NIMROBO_MOCK_MODE ?? true,
   });
 }
 

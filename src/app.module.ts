@@ -9,7 +9,7 @@ import { nimroboConfig } from './config/nimrobo.config.js';
  * Implements:
  * - Phase 1: Nimrobo Outcome Analytics & User Profile
  * - Phase 2: Local Mac Outcome Run Dispatcher
- * - OAuth 2.0 PKCE / Bearer Authentication compliant with Nimrobo specification
+ * - OAuth 2.1 PKCE / Bearer Authentication & JWKS verification
  */
 @McpApp({
   module: AppModule,
@@ -35,19 +35,27 @@ import { nimroboConfig } from './config/nimrobo.config.js';
       // Resource URI (Public identity of the MCP server or cloud API)
       resourceUri: nimroboConfig.resourceUri,
 
-      // Nimrobo Authorization Server
+      // Nimrobo / Auth0 Authorization Server
       authorizationServers: [
         nimroboConfig.authServerUrl,
       ],
 
-      // Allowed scopes (spec allows user:read for nitrostack_mcp client)
+      // Allowed scopes (spec allows user:read)
       scopesSupported: [
         nimroboConfig.scope,
       ],
 
+      // Cryptographic JWKS Signature Verification (RFC 7517)
+      jwksUri: nimroboConfig.jwksUri,
+
+      // Dynamic Client Registration (RFC 7591)
+      enableClientRegistration: nimroboConfig.oauthEnableClientRegistration,
+      staticClientId: nimroboConfig.oauthClientId,
+      staticClientSecret: nimroboConfig.oauthClientSecret,
+
       // Token Introspection endpoint (if validating opaque tokens via OAuth server)
       tokenIntrospectionEndpoint: nimroboConfig.introspectionEndpoint,
-      tokenIntrospectionClientId: nimroboConfig.clientId,
+      tokenIntrospectionClientId: nimroboConfig.oauthClientId || nimroboConfig.clientId,
       tokenIntrospectionClientSecret: nimroboConfig.introspectionClientSecret,
 
       audience: nimroboConfig.tokenAudience,
