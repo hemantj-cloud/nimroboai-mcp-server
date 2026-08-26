@@ -18,14 +18,13 @@ import { nimroboConfig } from './config/nimrobo.config.js';
 async function bootstrap() {
   try {
     console.error('🚀 Starting Nimrobo MCP Server (NitroStack)...');
-    console.error(`   API Base URL: ${nimroboConfig.apiBaseUrl}`);
+    console.error(`   Resource URI: ${nimroboConfig.resourceUri}`);
+    console.error(`   Auth Server:  ${nimroboConfig.authServerUrl}`);
     console.error(`   Client ID:    ${nimroboConfig.clientId}`);
     console.error(`   Scope:        ${nimroboConfig.scope}`);
     console.error(`   PKCE Method:  ${nimroboConfig.codeChallengeMethod}`);
     console.error(`   Mock Mode:    ${nimroboConfig.isMockMode ? 'ENABLED (Offline/Sandbox)' : 'DISABLED (Live Endpoints)'}`);
-
-    const authEnforced = process.env.OAUTH_REQUIRED === 'true';
-    console.error(`   OAuth Guard:  ${authEnforced ? 'ENFORCED (OAUTH_REQUIRED=true)' : 'PERMISSIVE (Dev Mode)'}\n`);
+    console.error(`   OAuth Guard:  ${nimroboConfig.oauthRequired ? 'ENFORCED (OAUTH_REQUIRED=true)' : 'PERMISSIVE (Dev Mode)'}\n`);
 
     // Create the MCP application
     const server = await McpApplicationFactory.create(AppModule);
