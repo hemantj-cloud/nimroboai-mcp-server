@@ -43,36 +43,34 @@ The Nimrobo MCP Server serves as the central control and data intelligence plane
 
 ```mermaid
 flowchart TB
-    subgraph ClientLayer["AI Client & Agent Layer"]
+    subgraph ClientLayer["AI Client and Agent Layer"]
         Claude["Claude Desktop"]
         Cursor["Cursor IDE"]
         Studio["NitroStudio / Web"]
         Agents["Autonomous AI Agents"]
     end
 
-    subgraph NitroRuntime["Nimrobo MCP Server (@nitrostack/core Runtime)"]
-        direction TB
-        
-        subgraph TransportLayer["Transport & Protocol Layer"]
+    subgraph NitroRuntime["Nimrobo MCP Server - NitroStack Core Runtime"]
+        subgraph TransportLayer["Transport and Protocol Layer"]
             StdioTransport["Stdio Transport"]
-            HttpTransport["HTTP / SSE Transport (Port 3000/3005)"]
+            HttpTransport["HTTP / SSE Transport"]
             ProtocolDispatcher["MCP Protocol Dispatcher"]
         end
 
-        subgraph SecuritySubsystem["Security & Auth Subsystem"]
+        subgraph SecuritySubsystem["Security and Auth Subsystem"]
             ConfigValidation["Zod Fail-Fast Config Loader"]
-            OAuthGuard["OAuthGuard (RFC 8707 / RFC 7517)"]
-            PKCEService["PKCE S256 Service (RFC 7636)"]
+            OAuthGuard["OAuthGuard - RFC 8707 / RFC 7517"]
+            PKCEService["PKCE S256 Service - RFC 7636"]
         end
 
         subgraph McpModule["Nimrobo Feature Module"]
-            Tools["MCP Tools (6 Tools)\n• Analytics • Catalog • Runs • Dispatch"]
-            Resources["MCP Resources (2 Resources)\n• nimrobo://outcomes/catalog\n• nimrobo://user/profile"]
-            Prompts["MCP Prompts (2 Prompts)\n• analyze_outcome_performance\n• plan_outcome_experiment"]
-            HealthCheck["System Health Provider (health://checks)"]
+            Tools["MCP Tools - 6 Tools<br/>Analytics | Catalog | Runs | Dispatch"]
+            Resources["MCP Resources - 2 Resources<br/>Catalog | Profile"]
+            Prompts["MCP Prompts - 2 Prompts<br/>Performance Analysis | Experiment Planning"]
+            HealthCheck["System Health Provider"]
         end
 
-        subgraph WidgetsLayer["MCP UI Widgets (Next.js Static Bundle)"]
+        subgraph WidgetsLayer["MCP UI Widgets - Next.js Static Bundle"]
             W_Profile["user-profile"]
             W_Catalog["outcomes-catalog"]
             W_Analytics["outcome-analytics"]
@@ -81,19 +79,18 @@ flowchart TB
             W_Dispatch["dispatch-result"]
         end
 
-        subgraph ServiceLayer["Service & Integration Layer"]
-            NimroboClient["NimroboClientService (Axios + Interceptors)"]
+        subgraph ServiceLayer["Service and Integration Layer"]
+            NimroboClient["NimroboClientService"]
             MockFixture["Offline Mock Sandbox Fixtures"]
         end
     end
 
-    subgraph ExternalServices["External Infrastructure & Targets"]
-        Auth0["Auth Server / Auth0 (OAuth 2.1 / JWKS)"]
-        NimroboCloud["Nimrobo Cloud API (https://app.nimroboai.com)"]
-        MacBridge["Local Mac Execution Bridge / Daemon"]
+    subgraph ExternalServices["External Infrastructure and Targets"]
+        Auth0["Auth Server / Auth0"]
+        NimroboCloud["Nimrobo Cloud API"]
+        MacBridge["Local Mac Execution Daemon"]
     end
 
-    %% Client to Transport
     Claude -->|MCP JSON-RPC over Stdio| StdioTransport
     Cursor -->|MCP JSON-RPC over Stdio| StdioTransport
     Studio -->|MCP JSON-RPC over HTTP/SSE| HttpTransport
@@ -102,11 +99,10 @@ flowchart TB
     StdioTransport --> ProtocolDispatcher
     HttpTransport --> ProtocolDispatcher
 
-    %% Protocol to Security & Module
     ProtocolDispatcher --> ConfigValidation
     ProtocolDispatcher --> OAuthGuard
     OAuthGuard --> PKCEService
-    PKCEService <-->|Token Exchange & JWKS Verify| Auth0
+    PKCEService -->|Token Exchange and JWKS Verify| Auth0
 
     ProtocolDispatcher --> McpModule
     McpModule --> Tools
@@ -114,17 +110,15 @@ flowchart TB
     McpModule --> Prompts
     McpModule --> HealthCheck
 
-    %% Tool Widget bindings
     Tools -.->|Auto-registered UI| WidgetsLayer
-    WidgetsLayer -.->|Embedded HTML/React| Studio
+    WidgetsLayer -.->|Embedded UI| Studio
 
-    %% Module to Services
     Tools --> NimroboClient
     Resources --> NimroboClient
     Prompts --> NimroboClient
-    
-    NimroboClient -->|Live API Requests (Bearer Auth)| NimroboCloud
-    NimroboClient -.->|Fallback (NIMROBO_MOCK_MODE=true)| MockFixture
+
+    NimroboClient -->|Live API Requests with Bearer Auth| NimroboCloud
+    NimroboClient -.->|Offline Fallback Mode| MockFixture
     NimroboClient -->|Local Experiment Dispatch| MacBridge
 ```
 
@@ -151,39 +145,39 @@ flowchart TB
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as AI User / MCP Client
+    actor User as AI Client / Agent
     participant Server as Nimrobo MCP Server
     participant Guard as OAuthGuard
     participant OAuth as OAuthService
-    participant AS as Auth0 / Auth Server
+    participant AS as Auth Server (Auth0)
     participant API as Nimrobo Cloud API
 
     User->>Server: Invoke MCP Tool (e.g. get_outcomes)
     Server->>Guard: canActivate(ExecutionContext)
     
-    alt OAUTH_REQUIRED=false (Dev Mode)
-        Guard-->>Server: Allow request (or attach identity if token present)
-    else OAUTH_REQUIRED=true (Enforced)
+    alt Dev Mode (OAUTH_REQUIRED=false)
+        Guard-->>Server: Allow request
+    else Enforced Mode (OAUTH_REQUIRED=true)
         alt No Bearer Token Provided
-            Guard-->>User: 401 Unauthorized (OAuth Token Required)
+            Guard-->>User: 401 Unauthorized
             User->>OAuth: Initiate OAuth PKCE Flow
-            OAuth->>OAuth: Generate code_verifier + code_challenge (S256)
-            OAuth->>AS: Authorization Request (client_id, S256 challenge, resource)
-            AS-->>User: Present User Consent & Login
-            User->>AS: Approve Permissions
+            OAuth->>OAuth: Generate code_verifier + S256 challenge
+            OAuth->>AS: Authorization Request with S256 challenge
+            AS-->>User: Consent and Login Screen
+            User->>AS: Grant Permission
             AS-->>OAuth: Return Authorization Code
-            OAuth->>AS: POST /oauth/token (code + code_verifier)
+            OAuth->>AS: POST /oauth/token (code + verifier)
             AS-->>OAuth: Return Access Token (Bearer)
             OAuth->>Guard: Token Cached
-        else Token Present
-            Guard->>AS: Verify signature via JWKS (RFC 7517) & Audience (RFC 8707)
-            Guard-->>Server: Token Validated & Context Populated
+        else Bearer Token Present
+            Guard->>AS: Verify signature via JWKS and validate audience
+            Guard-->>Server: Token Validated
         end
     end
 
-    Server->>API: HTTP Request with Authorization: Bearer <token>
+    Server->>API: HTTP Request with Bearer Token
     API-->>Server: JSON Response Payload
-    Server-->>User: Formatted MCP Tool Result + Dynamic UI Widget
+    Server-->>User: MCP Tool Result + Dynamic UI Widget
 ```
 
 ---
@@ -200,30 +194,30 @@ sequenceDiagram
     participant MacDaemon as Local Mac Execution Daemon
     participant CloudAPI as Nimrobo Cloud Backend
 
-    Agent->>MCP: dispatch_outcome_run(outcome_id, hypothesis, target_environment="local_mac")
-    MCP->>Dispatcher: Validate input schema (Zod)
+    Agent->>MCP: dispatch_outcome_run(outcome_id, hypothesis, target_environment)
+    MCP->>Dispatcher: Validate input schema via Zod
     Dispatcher->>Client: dispatchOutcomeRun(payload)
 
-    alt target_environment = "local_mac"
-        Client->>MacDaemon: Dispatch experiment execution to local Mac bridge
-        MacDaemon->>MacDaemon: Initialize sandbox environment & execute variant code
-        MacDaemon-->>CloudAPI: Stream telemetry & execution logs
-    else target_environment = "cloud"
+    alt Local Mac Environment (target_environment = local_mac)
+        Client->>MacDaemon: Dispatch execution to local Mac bridge
+        MacDaemon->>MacDaemon: Execute optimization variant sandbox
+        MacDaemon-->>CloudAPI: Stream telemetry and execution logs
+    else Cloud Environment (target_environment = cloud)
         Client->>CloudAPI: POST /api/v1/runs/dispatch
-        CloudAPI->>CloudAPI: Queue cloud container execution
+        CloudAPI->>CloudAPI: Queue cloud runner execution
     end
 
-    Client-->>Dispatcher: Return Run Metadata (run_id, status: "running")
+    Client-->>Dispatcher: Return Run Metadata (run_id, status: running)
     Dispatcher-->>Agent: Dispatched Response + dispatch-result Widget
 
     loop Real-Time Monitoring
         Agent->>MCP: get_run_status(run_id, include_logs=true)
-        MCP->>Client: Fetch current execution stepper & logs
+        MCP->>Client: Fetch current execution stepper and logs
         Client-->>Agent: Return live step progression + diagnostic console logs
     end
 
     Agent->>MCP: get_outcome_analytics(outcome_id)
-    MCP-->>Agent: Return updated conversion lift %, confidence interval & trend chart
+    MCP-->>Agent: Return conversion lift, confidence intervals, and trend chart
 ```
 
 ---
