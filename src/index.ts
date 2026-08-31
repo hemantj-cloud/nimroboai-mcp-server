@@ -11,7 +11,7 @@
  */
 
 import 'dotenv/config';
-import { McpApplicationFactory } from '@nitrostack/core';
+import { McpApplicationFactory, DIContainer, OAuthModule } from '@nitrostack/core';
 import { AppModule } from './app.module.js';
 import { nimroboConfig } from './config/nimrobo.config.js';
 
@@ -28,6 +28,14 @@ async function bootstrap() {
 
     // Create the MCP application
     const server = await McpApplicationFactory.create(AppModule);
+
+    // Suppress unconfigured built-in OAuthModule instantiation warning in dev mode
+    if (!OAuthModule.getConfig()) {
+      DIContainer.getInstance().registerValue(
+        OAuthModule,
+        Object.create(null) as OAuthModule,
+      );
+    }
 
     // Start the server
     await server.start();
